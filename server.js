@@ -1,33 +1,31 @@
-const express = require('express');
-const axios = require('axios');
+const https = require('https');
 
-const app = express();
 const authorizationToken = `Bearer ${process.env.SQUARE}`;
 const squareVersion = '2024-08-21';
+const apiEndpoint = 'https://connect.squareup.com/v2/catalog/list';
 
+const options = {
+  hostname: new URL(apiEndpoint).hostname,
+  port: 443,
+  path: new URL(apiEndpoint).pathname,
+  method: 'GET',
+  headers: {
+    'Square-Version': squareVersion,
+    'Authorization': authorizationToken,
+    'Content-Type': 'application/json',
+  },
+};
 
-async function callApi(url, params = {}) {
-    try {
-        const response = await axios.get(url, { params });
-        return response.data;
-    } catch (error) {
-        console.error('Error calling API:', error);
-        return { error: 'API call failed' };
-    }
-}
+https.get(options, (res) => {
+  let data = '';
 
-app.get('/api', async (req, res) => {
-    const apiEndpoint = 'https://connect.squareup.com/v2/catalog/list';
-    const apiParams = {
-      'Square-Version': squareVersion,
-      'Authorization': authorizationToken,
-      'Content-Type': 'application/json',
-    };
+  res.on('data', (chunk) => {
+    data += chunk;
+  });
 
-    const data = await callApi(apiEndpoint, apiParams);
-    res.json(data);
-});
-
-app.listen(8080, () => {
-    console.log('Server listening on port 8080');
+  res.on('end', () => {
+    console.log(data);
+  });
+}).on('error', (error) => {
+  console.error('Error:', error);
 });
