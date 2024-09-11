@@ -2,8 +2,8 @@ const axios = require('axios');
 
 const baseUrl = 'https://connect.squareup.com/v2/catalog/list';
 const squareVersion = '2024-08-21';
-const authorizationToken = 'Bearer EAAAl6G3bYY4jfBkrKQkXsj1lC5nzLAK2uUAIv526MOqhOguOux3YnwPO6DMKvwA';
-//const authorizationToken = `Bearer ${process.env.SQUARE}`;
+//const authorizationToken = 'Bearer EAAAl6G3bYY4jfBkrKQkXsj1lC5nzLAK2uUAIv526MOqhOguOux3YnwPO6DMKvwA';
+const authorizationToken = `Bearer ${process.env.SQUARE}`;
 
 const headers = {
   'Square-Version': squareVersion,
