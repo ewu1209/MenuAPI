@@ -1,3 +1,4 @@
+const http = require('http');
 const https = require('https');
 
 const authorizationToken = `Bearer ${process.env.SQUARE}`;
@@ -16,16 +17,24 @@ const options = {
   },
 };
 
-https.get(options, (res) => {
-  let data = '';
+const server = http.createServer((req, res) => {
+  https.get(options, (apiRes) => {
+    let data = '';
 
-  res.on('data', (chunk) => {
-    data += chunk;
-  });
+    apiRes.on('data', (chunk) => {
+      data += chunk;
+    });
 
-  res.on('end', () => {
-    console.log(data);
+    apiRes.on('end', () => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    });
+  }).on('error', (error) => {
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Error fetching data');
   });
-}).on('error', (error) => {
-  console.error('Error:', error);
+});
+
+server.listen(8080, () => {
+  console.log('Server running at http://localhost:8080/');
 });
