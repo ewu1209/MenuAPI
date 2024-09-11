@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 
 const app = express();
-const authorizationToken = `Bearer ${process.env.square}`;
+const authorizationToken = `Bearer ${process.env.SQUARE}`;
 const squareVersion = '2024-08-21';
 
 
