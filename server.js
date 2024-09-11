@@ -49,8 +49,8 @@ http.createServer((req, res) => {
           'White Wine', 
           'Sparkling Wine', 
           'Craft Beer', 
-          'Beer', 
           'Seltzer & Cider', 
+          'Beer', 
           'No Alcohol'
         ];
 
@@ -127,15 +127,15 @@ http.createServer((req, res) => {
                     padding-left: 20px;
                 }
                 .menu-category {
-                    font-size: 55px;
+                    font-size: 60px;
                     font-weight: bold;
                     margin-top: 20px;
                     font-family: 'LEMONMILKLIGHT', sans-serif;
 
                 }
                 .menu-item {
-                    font-size: 16px;
-                    line-height: 25px;
+                    font-size: 18px;
+                    line-height: 36px;
                 }
                 .menu-item-price {
                     float: right;
