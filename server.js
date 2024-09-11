@@ -2,6 +2,9 @@ const express = require('express');
 const axios = require('axios');
 
 const app = express();
+const authorizationToken = `Bearer ${process.env.square}`;
+const squareVersion = '2024-08-21';
+
 
 async function callApi(url, params = {}) {
     try {
@@ -14,9 +17,11 @@ async function callApi(url, params = {}) {
 }
 
 app.get('/api', async (req, res) => {
-    const apiEndpoint = 'https://api.example.com/data';
+    const apiEndpoint = 'https://connect.squareup.com/v2/catalog/list';
     const apiParams = {
-        // Add your API parameters here
+      'Square-Version': squareVersion,
+      'Authorization': authorizationToken,
+      'Content-Type': 'application/json',
     };
 
     const data = await callApi(apiEndpoint, apiParams);
@@ -26,6 +31,3 @@ app.get('/api', async (req, res) => {
 app.listen(8080, () => {
     console.log('Server listening on port 8080');
 });
-
-
-
