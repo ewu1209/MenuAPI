@@ -114,10 +114,12 @@ http.createServer((req, res) => {
                 body {
                     font-family: 'LEMONMILK', sans-serif;
                     margin-bottom: 0px;
-                    background: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('https://ewu1209.github.io/MenuApp/images/background.webp');
+                    background: url('https://ewu1209.github.io/MenuApp/images/background.png'), #000000;
                     background-attachment: fixed; 
-                    background-size: 100%;
-                      color: white;
+                    background-position: left top;
+                    background-repeat: no-repeat;
+                    background-size: auto 100%;
+                    color: white;
                 }
                 .members {
                   color: #d0a53e;
