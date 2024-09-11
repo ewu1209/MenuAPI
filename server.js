@@ -114,28 +114,40 @@ http.createServer((req, res) => {
                 body {
                     font-family: 'LEMONMILK', sans-serif;
                     margin-bottom: 0px;
+                    background-color: black;
+                    color: white;
                 }
-
+                .members {
+                  color: #d0a53e;
+                  text-align:center;
+                }
+                .logo {
+                  width: 400px;
+                  padding: 50px;
+                  padding-bottom: 20px;
+                }
                 .menu-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
+                    grid-template-columns: 1fr 1fr 1fr 1fr;
                     gap: 20px;
                     margin: 20px;
+                    align-items: center;
                 }
                 .menu-column {
                     border-left: 0px solid #ccc;
                     padding-left: 20px;
                 }
                 .menu-category {
-                    font-size: 60px;
+                    font-size: 52px;
                     font-weight: bold;
                     margin-top: 20px;
+                    margin-bottom: 20px;
                     font-family: 'LEMONMILKLIGHT', sans-serif;
 
                 }
                 .menu-item {
                     font-size: 18px;
-                    line-height: 36px;
+                    line-height: 40px;
                 }
                 .menu-item-price {
                     float: right;
@@ -143,7 +155,6 @@ http.createServer((req, res) => {
                 .discount {
                     width: 100%;
                     padding: 30px;
-                    text-align:center;
                     background-color: black;
                     color: white;
                     position: absolute;
@@ -154,6 +165,12 @@ http.createServer((req, res) => {
         </head>
         <body>
         <div class="menu-grid">
+          <!-- Column 0: Logo -->
+          <div id="column0" class="menu-column">
+            <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
+            <br/>
+            <div class="members">Members take 25% off Everything</div>
+          </div>
           <!-- Column 1: Red Wine and Sparkling Wine -->
           <div id="column1" class="menu-column">`;
 
@@ -213,7 +230,6 @@ http.createServer((req, res) => {
           <!-- Column 3: Everything else -->
           <div id="column3" class="menu-column">${column3}</div>
         </div>
-        <div class="discount">EMPIRE MEMBERS TAKE 25% OFF EVERYTHING</div>
 
         </body>
         </html>`;
