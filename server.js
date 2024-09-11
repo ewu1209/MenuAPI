@@ -142,7 +142,7 @@ http.createServer((req, res) => {
                     padding-left: 20px;
                 }
                 .menu-category {
-                    font-size: 52px;
+                    font-size: 44px;
                     font-weight: bold;
                     margin-top: 20px;
                     margin-bottom: 20px;
@@ -150,7 +150,7 @@ http.createServer((req, res) => {
 
                 }
                 .menu-item {
-                    font-size: 18px;
+                    font-size: 15px;
                     line-height: 40px;
                 }
                 .menu-item-price {
