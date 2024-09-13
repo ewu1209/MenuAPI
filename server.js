@@ -126,8 +126,8 @@ http.createServer((req, res) => {
                   text-align:center;
                 }
                 .logo {
-                  width: 315px;
-                  padding: 50px;
+                  width: 215px;
+                  padding: 28px;
                   padding-bottom: 20px;
                 }
                 .menu-grid {
@@ -142,16 +142,16 @@ http.createServer((req, res) => {
                     padding-left: 20px;
                 }
                 .menu-category {
-                    font-size: 40px;
+                    font-size: 30px;
                     font-weight: bold;
-                    margin-top: 20px;
-                    margin-bottom: 20px;
+                    margin-top: 12px;
+                    margin-bottom: 12px;
                     font-family: 'LEMONMILKLIGHT', sans-serif;
 
                 }
                 .menu-item {
-                    font-size: 16px;
-                    line-height: 40px;
+                    font-size: 11px;
+                    line-height: 26px;
                 }
                 .menu-item-price {
                     float: right;
