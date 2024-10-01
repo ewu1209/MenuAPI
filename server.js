@@ -173,7 +173,7 @@ http.createServer((req, res) => {
           <div id="column0" class="menu-column">
             <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
             <br/>
-            <div class="members">Members take 25% off all alcohol</div>
+            <div class="members">Members take 25% off<br/> all alcohol</div>
           </div>
           <!-- Column 1: Red Wine and Sparkling Wine -->
           <div id="column1" class="menu-column">`;
