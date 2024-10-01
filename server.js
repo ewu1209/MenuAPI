@@ -173,7 +173,7 @@ http.createServer((req, res) => {
           <div id="column0" class="menu-column">
             <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
             <br/>
-            <div class="members">Members take 25% off Everything</div>
+            <div class="members">Members take 25% off all alcohol</div>
           </div>
           <!-- Column 1: Red Wine and Sparkling Wine -->
           <div id="column1" class="menu-column">`;
@@ -222,8 +222,8 @@ http.createServer((req, res) => {
             column1 += categorySection + categoryItems;
           } else if (categoryName === "White Wine" || categoryName === "Craft Beer") {
             column2 += categorySection + categoryItems;
-          } else {
-            column3 += categorySection + categoryItems;
+          } else if (categoryName === "Seltzer & Cider" || categoryName === "Beer" || categoryName === "No Alcohol") {
+           column3 += categorySection + categoryItems;
           }
         });
 
