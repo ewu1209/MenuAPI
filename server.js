@@ -48,6 +48,7 @@ http.createServer((req, res) => {
           'Red Wine', 
           'White Wine', 
           'Sparkling Wine', 
+          'Members Only', 
           'Craft Beer', 
           'Seltzer & Cider', 
           'Beer', 
