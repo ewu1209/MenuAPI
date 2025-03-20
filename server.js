@@ -46,9 +46,9 @@ http.createServer((req, res) => {
         // Desired category order
         const categoryOrder = [
           'Red Wine', 
-          'White Wine', 
           'Sparkling Wine', 
           'Members Only', 
+          'White Wine', 
           'Craft Beer', 
           'Seltzer & Cider', 
           'Beer', 
