@@ -219,7 +219,7 @@ http.createServer((req, res) => {
           }).join('');
 
           // Append category and items to the appropriate column
-          if (categoryName === "Red Wine" || categoryName === "Sparkling Wine") {
+          if (categoryName === "Red Wine" || categoryName === "Sparkling Wine" || categoryName === "Members Only") {
             column1 += categorySection + categoryItems;
           } else if (categoryName === "White Wine" || categoryName === "Craft Beer") {
             column2 += categorySection + categoryItems;
