@@ -50,7 +50,7 @@ http.createServer((req, res) => {
           'Members Only', 
           'White Wine', 
           'Craft Beer', 
-          'Seltzer & Cider', 
+          'Seltzer & More', 
           'Beer', 
           'No Alcohol'
         ];
@@ -221,9 +221,9 @@ http.createServer((req, res) => {
           // Append category and items to the appropriate column
           if (categoryName === "Red Wine" || categoryName === "Sparkling Wine" || categoryName === "Members Only") {
             column1 += categorySection + categoryItems;
-          } else if (categoryName === "White Wine" || categoryName === "Craft Beer") {
+          } else if (categoryName === "White Wine" || categoryName === "Seltzer & More") {
             column2 += categorySection + categoryItems;
-          } else if (categoryName === "Seltzer & Cider" || categoryName === "Beer" || categoryName === "No Alcohol") {
+          } else if (categoryName === "Beer" || categoryName === "No Alcohol") {
            column3 += categorySection + categoryItems;
           }
         });
