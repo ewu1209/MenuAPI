@@ -26,10 +26,6 @@ steps:
       - '--allow-unauthenticated'
       - '--service-account=330248243487-compute@developer.gserviceaccount.com'
 
-# This section lists the final image that was built.
-images:
-  - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
-
 # This 'options' block fixes the logging error.
 options:
   logging: CLOUD_LOGGING_ONLY
