@@ -25,7 +25,7 @@ function formatPrice(amount) {
 
 // Create an HTTP server
 http.createServer((req, res) => {
-  if (req.url === '/') {
+  if (req.url === '/' || req.url === '/rose') {
     // Make a GET request to the Square API to fetch catalog data
     const request = https.request(options, (apiRes) => {
       let data = '';
@@ -122,8 +122,8 @@ http.createServer((req, res) => {
                     color: white;
                 }
                 .members {
-                  color: #d0a53e;
-                  text-align:center;
+                  text-align: center;
+                  font-size: 14px;
                 }
                 .logo {
                   width: 215px;
@@ -156,6 +156,10 @@ http.createServer((req, res) => {
                 .menu-item-price {
                     float: right;
                 }
+                .rose {
+                  width: 144px;
+                  margin-bottom: -10px;
+                }
                 .discount {
                     width: 100%;
                     padding: 30px;
@@ -164,16 +168,44 @@ http.createServer((req, res) => {
                     position: absolute;
                     bottom: 0px;
                     left: 0px;
-                }
+                }`;
+
+        // interrupt styling for rose bar
+        if (req.url === '/rose') {
+          html += `
+            .menu-category {
+              color: white;
+            }
+            body {
+              color: pink;
+            }`;
+        };
+
+        // complete the styling
+        html += `
             </style>
         </head>
         <body>
         <div class="menu-grid">
           <!-- Column 0: Logo -->
-          <div id="column0" class="menu-column">
-            <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
-            <br/>
-            <div class="members">Members take 25% off<br/> all alcohol</div>
+          <div id="column0" class="menu-column members">`;
+
+        if (req.url === '/rose') {
+            html += `
+                <img class="rose" src="https://ewu1209.github.io/MenuApp/images/rose2.png"/>
+                <br/>
+                <img class="logo" src="https://ewu1209.github.io/MenuApp/images/empireonly.png"/>
+                <br/>
+                Members take 25% off<br/> all alcohol`;
+              }
+          else {
+            html += `
+                <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
+                <br/>
+                Members take 25% off<br/> all alcohol`;
+          };
+
+        html += `
           </div>
           <!-- Column 1: Red Wine and Sparkling Wine -->
           <div id="column1" class="menu-column">`;
