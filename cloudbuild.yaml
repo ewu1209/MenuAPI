@@ -1,4 +1,4 @@
-# This Cloud Build file first builds a container image using Buildpacks, 
+# This Cloud Build file first builds a container image using Buildpacks,
 # then deploys that image to a Cloud Run service.
 steps:
   # Step 1: Build the container image using Buildpacks
@@ -7,10 +7,8 @@ steps:
       - 'GOOGLE_RUNTIME_VERSION=20.15.1'
     args:
       - 'build'
-      # The image will be tagged with the project ID and commit SHA
       - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
-      # Pinned builder for stable, reproducible builds
-      - '--builder=gcr.io/buildpacks/builder@sha256:c34b123a1b14da717544a04d38062a4d33454707173b06e92150192a54972e25'
+      - '--builder=gcr.io/buildpacks/builder@sha256:c34b123a1b14da717544a04d33454707173b06e92150192a54972e25'
       - '--publish'
 
   # Step 2: Deploy the container image to Cloud Run
@@ -19,17 +17,17 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - '$_SERVICE_NAME' # from your variables: 'menuapi'
-      # Use the image that was just built in the previous step
+      - '$_SERVICE_NAME'
       - '--image=gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
-      - '--region=$_DEPLOY_REGION' # from your variables: 'us-central1'
-      - '--platform=$_PLATFORM' # from your variables: 'managed'
-      # Allows the service to be invoked by anyone. Remove if it should be private.
+      - '--region=$_DEPLOY_REGION'
+      - '--platform=$_PLATFORM'
       - '--allow-unauthenticated'
-      # The service account that the Cloud Run service will run as.
-      # You may need to change this to a more specific, less privileged service account.
       - '--service-account=330248243487-compute@developer.gserviceaccount.com'
 
 # This section lists the final image that was built.
 images:
   - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
+
+# Add this 'options' block to fix the logging error.
+options:
+  logging: CLOUD_LOGGING_ONLY
