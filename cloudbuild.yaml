@@ -8,7 +8,8 @@ steps:
     args:
       - 'build'
       - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
-      - '--builder=gcr.io/buildpacks/builder@sha256:c34b123a1b14da717544a04d33454707173b06e92150192a54972e25'
+      # Using the ':google-22' tag instead of the invalid digest
+      - '--builder=gcr.io/buildpacks/builder:google-22'
       - '--publish'
 
   # Step 2: Deploy the container image to Cloud Run
@@ -28,6 +29,6 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
 
-# Add this 'options' block to fix the logging error.
+# This 'options' block fixes the logging error.
 options:
   logging: CLOUD_LOGGING_ONLY
