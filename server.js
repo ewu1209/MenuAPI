@@ -44,10 +44,10 @@ http.createServer((req, res) => {
 
         // Desired category order
         const categoryOrder = [
-          'Red Wine', 
-          'Sparkling Wine', 
+          'Reds', 
+          'Sparkling', 
           'Members Only', 
-          'White Wine', 
+          'Whites', 
           'Craft Beer', 
           'Seltzer & More', 
           'Beer', 
@@ -218,9 +218,9 @@ http.createServer((req, res) => {
           }).join('');
 
           // Append category and items to the appropriate column
-          if (categoryName === "Red Wine" || categoryName === "Sparkling Wine" || categoryName === "Members Only") {
+          if (categoryName === "Reds" || categoryName === "Sparkling" || categoryName === "Members Only") {
             column1 += categorySection + categoryItems;
-          } else if (categoryName === "White Wine" || categoryName === "Seltzer & More") {
+          } else if (categoryName === "Whites" || categoryName === "Seltzer & More") {
             column2 += categorySection + categoryItems;
           } else if (categoryName === "Beer" || categoryName === "No Alcohol") {
            column3 += categorySection + categoryItems;
