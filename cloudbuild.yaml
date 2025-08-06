@@ -1,4 +1,4 @@
-# This Cloud Build file first builds a container image using Buildpacks,
+# This Cloud Build file first builds a container image using Buildpacks, 
 # then deploys that image to a Cloud Run service.
 steps:
   # Step 1: Build the container image using Buildpacks
