@@ -6,7 +6,6 @@ const PORT = 8080;
 const authorizationToken = `Bearer ${process.env.SQUARE}`;
 const squareVersion = '2024-08-21';
 const apiEndpoint = 'https://connect.squareup.com/v2/catalog/list';
-
 const options = {
   hostname: new URL(apiEndpoint).hostname,
   port: 443,
