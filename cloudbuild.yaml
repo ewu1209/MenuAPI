@@ -7,8 +7,8 @@ steps:
       - 'GOOGLE_RUNTIME_VERSION=20.15.1'
     args:
       - 'build'
-      - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
-      # Using the ':google-22' tag instead of the invalid digest
+      # Using the automatic $REPO_NAME variable instead of the custom $_REPO_NAME
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
       - '--builder=gcr.io/buildpacks/builder:google-22'
       - '--publish'
 
@@ -19,7 +19,8 @@ steps:
       - 'run'
       - 'deploy'
       - '$_SERVICE_NAME'
-      - '--image=gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
+      # Using the automatic $REPO_NAME variable here as well
+      - '--image=gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
       - '--region=$_DEPLOY_REGION'
       - '--platform=$_PLATFORM'
       - '--allow-unauthenticated'
@@ -27,7 +28,7 @@ steps:
 
 # This section lists the final image that was built.
 images:
-  - 'gcr.io/$PROJECT_ID/$_REPO_NAME:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
 
 # This 'options' block fixes the logging error.
 options:
