@@ -115,6 +115,7 @@ http.createServer((req, res) => {
                   display: flex;
                   align-items: center;
                   justify-content: center;
+                  zoom: 110%;
                   height: 100%;
                 }
                 body {
@@ -182,9 +183,6 @@ http.createServer((req, res) => {
           html += `
             .menu-category {
               color: white;
-            }
-            html {
-              zoom: 110%;
             }
             body {
               color: pink;
