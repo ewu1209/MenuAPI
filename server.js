@@ -115,6 +115,7 @@ http.createServer((req, res) => {
                   display: flex;
                   align-items: center;
                   justify-content: center;
+                  height: 100%;
                 }
                 body {
                     font-family: 'LEMONMILK', sans-serif;
@@ -181,6 +182,9 @@ http.createServer((req, res) => {
           html += `
             .menu-category {
               color: white;
+            }
+            html {
+              zoom: 110%;
             }
             body {
               color: pink;
