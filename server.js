@@ -111,6 +111,11 @@ http.createServer((req, res) => {
                 }
 
                 /* Apply the LEMONMILK font to the entire body */
+                html {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                }
                 body {
                     font-family: 'LEMONMILK', sans-serif;
                     margin-bottom: 0px;
@@ -120,6 +125,7 @@ http.createServer((req, res) => {
                     background-repeat: no-repeat;
                     background-size: auto 100%;
                     color: white;
+                    width: 100%;
                 }
                 .members {
                   text-align: center;
