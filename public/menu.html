@@ -13,7 +13,8 @@
 @font-face{font-family:"Linotype Spitz";src:url(fonts/spitz-bold.ttf) format("truetype");font-weight:700;font-display:block}
 
 /* A 16:9 bar TV. --u is 1% of screen height (capped by width), so it reads the same from 720p to 4K.
-   --k is a fit factor that fit() lowers only if the menu would overflow.
+   --k scales the type and --g the space between rows; fit() sets both so the menu fills the screen
+   with the largest type that still keeps every drink on one line.
    The look is quiet luxury: ivory type on warm black, gold used sparingly, hairlines and space instead of boxes. */
 :root{
   --bg:#0c0b09; --ink:#f3ecdf; --gold:#f2b000; --gold-hi:#ffd36b; --gold-lo:#a37a17;
@@ -21,8 +22,9 @@
   --display:"Lemon Milk",Georgia,serif;
   --body:"Linotype Spitz","Helvetica Neue",Arial,sans-serif;
   --u:min(1vh,.5625vw);
-  --k:1;
+  --k:1; --g:1;
   --s:calc(var(--u)*var(--k));
+  --v:calc(var(--s)*var(--g));
 }
 /* /rose: the same menu with a rosé accent instead of gold. */
 :root[data-theme="rose"]{--gold:#f2a7bd;--gold-hi:#ffc9d8;--gold-lo:#b06a80;--hair:rgba(242,167,189,.22)}
@@ -45,36 +47,36 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.06;mi
 .frame svg:nth-child(3){bottom:-1px;left:-1px;transform:scaleY(-1)}
 .frame svg:nth-child(4){bottom:-1px;right:-1px;transform:scale(-1)}
 
-.screen{position:relative;z-index:1;height:100%;display:grid;grid-template-rows:1fr auto;gap:calc(var(--s)*3.6);
-  padding:calc(var(--u)*7) calc(var(--u)*10) calc(var(--u)*4.6)}
+.screen{position:relative;z-index:1;height:100%;display:grid;grid-template-rows:1fr auto;gap:calc(var(--u)*3);
+  padding:calc(var(--u)*5.2) calc(var(--u)*4.6) calc(var(--u)*3.8)}
 
 /* Three columns separated by faded hairlines; the middle one ends in the Champagne card. */
 .menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;overflow:hidden}
-.col{position:relative;display:flex;flex-direction:column;gap:calc(var(--s)*4.4);min-width:0;padding:0 calc(var(--u)*3.4)}
+.col{position:relative;display:flex;flex-direction:column;gap:calc(var(--v)*3.4);min-width:0;padding:0 calc(var(--u)*2.4)}
 .col:first-child{padding-left:0}
 .col:last-child{padding-right:0}
 .col+.col::before{content:"";position:absolute;left:0;top:2%;bottom:2%;width:1px;
   background:linear-gradient(transparent,rgba(242,176,0,.16) 20%,rgba(242,176,0,.16) 80%,transparent)}
 
-.sec h2{display:flex;align-items:baseline;gap:calc(var(--u)*1.6);margin:0 0 calc(var(--s)*1.5);padding-bottom:calc(var(--s)*1.1);
+.sec h2{display:flex;align-items:baseline;gap:calc(var(--u)*1.6);margin:0 0 calc(var(--v)*1.2);padding-bottom:calc(var(--s)*1);
   border-bottom:1px solid var(--hair);font-family:var(--display);font-weight:400;font-size:calc(var(--s)*2.25);line-height:1;
   letter-spacing:.34em;color:var(--gold)}
 .sec h2 small{margin-left:auto;font-family:var(--body);font-weight:400;font-size:calc(var(--s)*1.95);letter-spacing:.04em;color:var(--mute);white-space:nowrap}
 
 /* Every drink is one line, all the same height: name, origin flag (wines), size, price, then any tag.
    Price sits right after the name (no column of numbers to compare). Gold is kept for headings and prices only. */
-.items{list-style:none;margin:0;padding:0;display:grid;gap:calc(var(--s)*1.7)}
-.items li{display:flex;align-items:center;gap:calc(var(--u)*1.4);min-width:0;height:calc(var(--s)*3.8)}
+.items{list-style:none;margin:0;padding:0;display:grid;gap:calc(var(--v)*1.1)}
+.items li{display:flex;align-items:center;gap:calc(var(--s)*1.05);min-width:0;height:calc(var(--s)*3.6)}
 .name{font-size:calc(var(--s)*3.1);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .size{flex:none;font-family:var(--display);font-weight:300;font-size:calc(var(--s)*1.45);letter-spacing:.14em;color:var(--mute)}
 .price{flex:none;font-family:var(--display);font-weight:400;font-size:calc(var(--s)*2.4);letter-spacing:.06em;color:var(--gold);font-variant-numeric:lining-nums}
-.price i{font-style:normal;color:var(--faint);margin:0 .32em}
+.price i{font-style:normal;color:var(--faint);margin:0 .26em}
 .tag{flex:none;font-family:var(--display);font-weight:400;font-size:calc(var(--s)*1.2);letter-spacing:.14em;text-transform:uppercase;
   color:var(--ink);opacity:.78;padding-left:calc(var(--u)*1.3);border-left:1px solid rgba(243,236,223,.25)}
 .flag{flex:none;width:calc(var(--s)*2.4);height:calc(var(--s)*1.6);border-radius:calc(var(--s)*.22);overflow:hidden;
   box-shadow:0 0 0 1px rgba(243,236,223,.18);filter:saturate(.82) brightness(.96)}
 .flag svg{display:block;width:100%;height:100%}
-.note{margin:calc(var(--s)*1.8) 0 0;font-weight:400;font-size:calc(var(--s)*1.9);color:var(--mute);letter-spacing:.01em}
+.note{margin:calc(var(--v)*1.4) 0 0;font-weight:400;font-size:calc(var(--s)*1.9);color:var(--mute);letter-spacing:.01em}
 
 /* The Champagne card: one hairline, generous space, a very slow sheen. */
 .toast{position:relative;overflow:hidden;margin-top:auto;padding:calc(var(--s)*2.2) calc(var(--s)*3) calc(var(--s)*2.3);text-align:center;
@@ -99,7 +101,7 @@ footer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:ca
   font-family:var(--display);font-weight:300;font-size:calc(var(--u)*1.6);letter-spacing:.28em;text-transform:uppercase;color:var(--mute)}
 footer b{font-weight:400;color:var(--gold)}
 footer .ig{text-transform:none;letter-spacing:.14em}
-.logo{height:calc(var(--u)*9.5);width:auto;display:block;flex:none}
+.logo{height:calc(var(--u)*8.2);width:auto;display:block;flex:none}
 .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(242,176,0,.08),var(--hair))}
 .rule.r{background:linear-gradient(270deg,rgba(242,176,0,.08),var(--hair))}
 footer .side{display:flex;align-items:center;gap:calc(var(--u)*3.5);min-width:0}
@@ -150,14 +152,20 @@ const section = s => s.toast ? toast(s) :
 
 document.getElementById("menu").innerHTML = MENU.map(col => `<div class="col">${col.map(section).join("")}</div>`).join("");
 
-/* Shrink a little at a time only if the menu overflows (more items, odd screen); never grow past 1. */
+/* Grow the type until a name would be cut off or the menu would overflow, then spread the rows
+   to take up any height that is left. Both are binary searches, so it settles in a few passes. */
 function fit() {
   const root = document.documentElement, menu = document.getElementById("menu");
-  let k = 1;
-  root.style.setProperty("--k", k);
+  const set = (v, x) => root.style.setProperty(v, x);
   const over = () => menu.scrollHeight > menu.clientHeight + 1 ||
-    [...menu.querySelectorAll(".name")].some(el => el.scrollWidth > el.clientWidth + 1);
-  while (over() && k > 0.6) root.style.setProperty("--k", k = +(k - 0.02).toFixed(2));
+    [...menu.querySelectorAll(".name")].some(el => el.scrollWidth > el.clientWidth);
+  const largest = (v, lo, hi) => {
+    for (let i = 0; i < 9; i++) { const mid = (lo + hi) / 2; set(v, mid); over() ? hi = mid : lo = mid; }
+    set(v, Math.floor(lo * 1000) / 1000);
+  };
+  set("--g", 1);
+  largest("--k", 0.5, 2.2);
+  largest("--g", 1, 2.4);
 }
 fit();
 document.fonts.ready.then(fit);
