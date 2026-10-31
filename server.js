@@ -1,303 +1,223 @@
 const http = require('http');
 const https = require('https');
-const PORT = 8080;
+const fs = require('fs');
+const path = require('path');
+const PORT = process.env.PORT || 8080;
 
 // API details
 const authorizationToken = `Bearer ${process.env.SQUARE}`;
 const squareVersion = '2024-08-21';
 const apiEndpoint = 'https://connect.squareup.com/v2/catalog/list';
-const options = {
-  hostname: new URL(apiEndpoint).hostname,
-  port: 443,
-  path: new URL(apiEndpoint).pathname,
-  method: 'GET',
-  headers: {
-    'Square-Version': squareVersion,
-    'Authorization': authorizationToken,
-    'Content-Type': 'application/json',
-  },
-};
+
+// The page template (public/menu.html) and the files it loads (fonts, logo).
+const PUBLIC = path.join(__dirname, 'public');
+const TEMPLATE = fs.readFileSync(path.join(PUBLIC, 'menu.html'), 'utf8');
+const TYPES = { '.otf': 'font/otf', '.ttf': 'font/ttf', '.png': 'image/png' };
+const STATIC = {};
+for (const dir of ['fonts', 'assets']) {
+  for (const file of fs.readdirSync(path.join(PUBLIC, dir))) {
+    STATIC[`/${dir}/${file}`] = path.join(PUBLIC, dir, file);
+  }
+}
 
 // Helper function to format price by rounding to nearest dollar (no dollar sign, no cents)
 function formatPrice(amount) {
   return Math.round(amount / 100); // Rounds the price to the nearest dollar
 }
 
-// Create an HTTP server
-http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/rose') {
-    // Make a GET request to the Square API to fetch catalog data
-    const request = https.request(options, (apiRes) => {
+// Fetch the whole Square catalog, following pagination cursors.
+function fetchCatalog() {
+  const get = cursor => new Promise((resolve, reject) => {
+    const url = new URL(apiEndpoint);
+    if (cursor) url.searchParams.set('cursor', cursor);
+    const req = https.request({
+      hostname: url.hostname,
+      port: 443,
+      path: url.pathname + url.search,
+      method: 'GET',
+      headers: {
+        'Square-Version': squareVersion,
+        'Authorization': authorizationToken,
+        'Content-Type': 'application/json',
+      },
+    }, apiRes => {
       let data = '';
-
-      // Collect data as it comes in
-      apiRes.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      // Process the complete response
+      apiRes.on('data', chunk => { data += chunk; });
       apiRes.on('end', () => {
-        const responseJson = JSON.parse(data);
+        if (apiRes.statusCode !== 200) return reject(new Error(`Square responded ${apiRes.statusCode}`));
+        try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(10000, () => req.destroy(new Error('Square request timed out')));
+    req.end();
+  });
+  return (async () => {
+    let objects = [], cursor;
+    do {
+      const page = await get(cursor);
+      objects = objects.concat(page.objects || []);
+      cursor = page.cursor;
+    } while (cursor);
+    return objects;
+  })();
+}
 
-        // Extract catalog data from the response (assumes response includes a "objects" array)
-        const catalog = responseJson;
+// How each Square item is shown, keyed by its Square name in lower case, without "(canned)".
+// rank is the order within its section (2026 sales); cc is a wine's origin flag; size is shown
+// small after the name; tag is the "Popular" marker. Items not listed here still appear,
+// after the listed ones, under their Square name.
+const CURATION = {
+  'daou reserve cabernet':  { rank: 1, cc: 'us' },
+  'house cabernet':         { rank: 2 },
+  'house pinot noir':       { rank: 3 },
+  'caymus cabernet 1l':     { rank: 4, cc: 'us', name: 'Caymus Cabernet', size: '1 L' },
 
-        // Desired category order
-        const categoryOrder = [
-          'Reds', 
-          'Sparkling', 
-          'Members Only', 
-          'Whites', 
-          'Craft Beer', 
-          'Seltzer & More', 
-          'Beer', 
-          'No Alcohol'
-        ];
+  'freixenet pinot grigio': { rank: 1, cc: 'it' },
+  'house sauv blanc':       { rank: 2, name: 'House Sauvignon Blanc' },
+  'stags leap sauv blanc':  { rank: 3, cc: 'us', name: 'Stags Leap Sauvignon Blanc' },
+  'house chardonnay':       { rank: 4 },
+  'campuget viognier':      { rank: 5, cc: 'fr' },
 
-        // Create a lookup for category IDs and their names
-        let categoryLookup = {};
-        catalog.objects.filter(item => item.type === 'CATEGORY').forEach(category => {
-          categoryLookup[category.id] = category.category_data.name;
-        });
+  'freixenet prosecco':     { rank: 1, cc: 'it', tag: 'Popular' },
+  'gemma di luna moscato':  { rank: 2, cc: 'it', name: 'Gemma di Luna Moscato', size: '187 ml' },
+  'sparkling rose':         { rank: 3, name: 'Sparkling Rosé' },
 
-        // Group items by category id, filtering out archived items (is_archived: true)
-        let groupedItems = {};
-        catalog.objects
-          .filter(item => item.type === 'ITEM' && !item.item_data.is_archived)  // Exclude archived items
-          .forEach(item => {
-            if (item.item_data.categories) {
-              if (item.item_data.categories.length > 0 && item.item_data.categories[0].id) {
-                let categoryId = item.item_data.categories[0].id;
+  'margarita':              { rank: 1, tag: 'Popular' },
+  'espresso martini':       { rank: 2 },
+  'mojito':                 { rank: 3 },
+  'moscow mule':            { rank: 4 },
 
-                if (!groupedItems[categoryId]) {
-                  groupedItems[categoryId] = [];
-                }
-                groupedItems[categoryId].push(item);
-              }
-            }
-          });
+  'press hard seltzer':     { rank: 1 },
+  'spellbinder hazy ipa':   { rank: 2 },
+  'modelo':                 { rank: 3 },
+  'michelob ultra':         { rank: 4 },
+  'pineapple cider':        { rank: 5 },
 
-        // Sort categories based on predefined categoryOrder
-        let sortedCategoryIds = Object.keys(groupedItems).sort((a, b) => {
-          let categoryNameA = categoryLookup[a];
-          let categoryNameB = categoryLookup[b];
+  'michelob 0':             { rank: 1 },
+  'black tea / cold brew':  { rank: 2 },
+  'celsius':                { rank: 3 },
+  'pellegrino sparkling':   { rank: 4 },
+  'fiji water':             { rank: 5 },
+  'canned soda':            { rank: 6 },
+};
+const CANNED = /\s*\(canned\)\s*$/i;
+const key = name => name.replace(CANNED, '').replace(/\s+/g, ' ').trim().toLowerCase();
 
-          let indexA = categoryOrder.indexOf(categoryNameA);
-          let indexB = categoryOrder.indexOf(categoryNameB);
+// Sections on the screen, in column order. Square categories map onto them in sectionFor().
+const WINE = 'glass / bottle';
+const LAYOUT = [
+  [{ id: 'reds', title: 'Reds', legend: WINE },
+   { id: 'whites', title: 'Whites', legend: WINE, note: 'A bottle pours about five glasses.' },
+   { id: 'members', title: 'Members Only' }],
+  [{ id: 'sparkling', title: 'Sparkling', legend: WINE },
+   { id: 'canned', title: 'Canned Cocktails' },
+   { id: 'champagne' }],
+  [{ id: 'beer', title: 'Beer, Cider & Seltzer' },
+   { id: 'zero', title: 'Zero Proof' },
+   { id: 'other', title: 'More' }],
+];
 
-          return indexA - indexB;
-        });
+function sectionFor(category, name) {
+  switch (category) {
+    case 'Reds': return 'reds';
+    case 'Whites': return 'whites';
+    case 'Members Only': return 'members';
+    case 'Sparkling': return /veuve/i.test(name) ? 'champagne' : 'sparkling';
+    case 'Seltzer & More': return CANNED.test(name) ? 'canned' : 'beer';
+    case 'Beer':
+    case 'Craft Beer': return 'beer';
+    case 'No Alcohol': return 'zero';
+    default: return 'other';
+  }
+}
 
-        // Start generating the HTML response
-        let html = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Menu</title>
-            <style>
-                /* Load the LEMONMILK-Regular font */
-                @font-face {
-                    font-family: 'LEMONMILK';
-                    src: url('https://ewu1209.github.io/MenuApp/fonts/LEMONMILK-Regular.otf') format('opentype');
-                    font-weight: normal;
-                    font-style: normal;
-                }
-                @font-face {
-                    font-family: 'LEMONMILKLIGHT';
-                    src: url('https://ewu1209.github.io/MenuApp/fonts/LEMONMILK-Light.otf') format('opentype');
-                    font-weight: normal;
-                    font-style: normal;
-                }
+// Turn the Square catalog into the MENU structure public/menu.html renders.
+function buildMenu(objects) {
+  const categories = {};
+  objects.filter(o => o.type === 'CATEGORY').forEach(c => { categories[c.id] = c.category_data.name; });
 
-                /* Apply the LEMONMILK font to the entire body */
-                html {
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  zoom: 110%;
-                  height: 100%;
-                }
-                body {
-                    font-family: 'LEMONMILK', sans-serif;
-                    margin-bottom: 0px;
-                    background: url('https://ewu1209.github.io/MenuApp/images/background.png'), #000000;
-                    background-attachment: fixed; 
-                    background-position: left top;
-                    background-repeat: no-repeat;
-                    background-size: auto 100%;
-                    color: white;
-                    width: 100%;
-                }
-                .members {
-                  text-align: center;
-                  font-size: 14px;
-                }
-                .logo {
-                  width: 215px;
-                  padding: 28px;
-                  padding-bottom: 20px;
-                }
-                .menu-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr 1fr;
-                    gap: 20px;
-                    margin: 20px;
-                    align-items: center;
-                }
-                .menu-column {
-                    border-left: 0px solid #ccc;
-                    padding-left: 20px;
-                }
-                .menu-category {
-                    font-size: 30px;
-                    font-weight: bold;
-                    margin-top: 12px;
-                    margin-bottom: 12px;
-                    font-family: 'LEMONMILKLIGHT', sans-serif;
-
-                }
-                .menu-item {
-                    font-size: 11px;
-                    line-height: 26px;
-                }
-                .menu-item-price {
-                    float: right;
-                }
-                .rose {
-                  width: 144px;
-                  margin-bottom: -10px;
-                }
-                .discount {
-                    width: 100%;
-                    padding: 30px;
-                    background-color: black;
-                    color: white;
-                    position: absolute;
-                    bottom: 0px;
-                    left: 0px;
-                }`;
-
-        // interrupt styling for rose bar
-        if (req.url === '/rose') {
-          html += `
-            .menu-category {
-              color: white;
-            }
-            body {
-              color: pink;
-            }`;
-        };
-
-        // complete the styling
-        html += `
-            </style>
-        </head>
-        <body>
-        <div class="menu-grid">
-          <!-- Column 0: Logo -->
-          <div id="column0" class="menu-column members">`;
-
-        if (req.url === '/rose') {
-            html += `
-                <img class="rose" src="https://ewu1209.github.io/MenuApp/images/rose2.png"/>
-                <br/>
-                <img class="logo" src="https://ewu1209.github.io/MenuApp/images/empireonly.png"/>
-                <br/>
-                Members take 25% off<br/> all alcohol`;
-              }
-          else {
-            html += `
-                <img class="logo" src="https://ewu1209.github.io/MenuApp/images/logo.png"/>
-                <br/>
-                Members take 25% off<br/> all alcohol`;
-          };
-
-        html += `
-          </div>
-          <!-- Column 1: Red Wine and Sparkling Wine -->
-          <div id="column1" class="menu-column">`;
-
-        // Reference to the 3 columns
-        let column1 = '', column2 = '', column3 = '';
-
-        // Process each category and its items
-        sortedCategoryIds.forEach(categoryId => {
-          let categoryName = categoryLookup[categoryId];
-          let categorySection = `<div class="menu-category">${categoryName}</div>`;
-
-          // Sort items by their lowest price
-          let categoryItems = groupedItems[categoryId].sort((a, b) => {
-            // Get the lowest price of each item
-            let priceA = Math.min(...a.item_data.variations
-              .filter(variation => !variation.item_variation_data.name.toLowerCase().includes("member"))
-              .map(variation => variation.item_variation_data.price_money.amount));
-
-            let priceB = Math.min(...b.item_data.variations
-              .filter(variation => !variation.item_variation_data.name.toLowerCase().includes("member"))
-              .map(variation => variation.item_variation_data.price_money.amount));
-
-            return priceA - priceB;
-          }).map(item => {
-            let menuItem = `<div class="menu-item">${item.item_data.name}`;
-
-            // Get all non-member prices and combine them with a slash
-            let prices = item.item_data.variations
-              .filter(variation => !variation.item_variation_data.name.toLowerCase().includes("member"))
-              .map(variation => formatPrice(variation.item_variation_data.price_money.amount));
-
-            // Special treatment for items containing "Caymus 50th"
-            let priceText = prices.join(' / ');
-            if (item.item_data.name.toLowerCase().includes("50th")) {
-              priceText += " Per Glass"; // Append "Per Glass" to the price
-            }
-
-            // Price display
-            menuItem += `<span class="menu-item-price">${priceText}</span></div>`;
-            return menuItem;
-          }).join('');
-
-          // Append category and items to the appropriate column
-          if (categoryName === "Reds" || categoryName === "Sparkling" || categoryName === "Members Only") {
-            column1 += categorySection + categoryItems;
-          } else if (categoryName === "Whites" || categoryName === "Seltzer & More") {
-            column2 += categorySection + categoryItems;
-          } else if (categoryName === "Beer" || categoryName === "No Alcohol") {
-           column3 += categorySection + categoryItems;
-          }
-        });
-
-        // Complete the HTML structure for all columns
-        html += `${column1}</div>
-          <!-- Column 2: White Wine and Craft Beer -->
-          <div id="column2" class="menu-column">${column2}</div>
-          <!-- Column 3: Everything else -->
-          <div id="column3" class="menu-column">${column3}</div>
-        </div>
-
-        </body>
-        </html>`;
-
-        // Send the generated HTML as the response
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(html);
+  const buckets = {};
+  objects
+    .filter(o => o.type === 'ITEM' && !o.item_data.is_archived)  // Exclude archived items
+    .forEach(item => {
+      const catId = item.item_data.categories && item.item_data.categories[0] && item.item_data.categories[0].id;
+      if (!catId || !categories[catId]) return;
+      // Non-member prices, in Square's variation order (glass, then bottle)
+      const amounts = (item.item_data.variations || [])
+        .filter(v => !v.item_variation_data.name.toLowerCase().includes('member'))
+        .map(v => v.item_variation_data.price_money && v.item_variation_data.price_money.amount)
+        .filter(a => typeof a === 'number');
+      if (!amounts.length) return;
+      const name = item.item_data.name.trim();
+      const c = CURATION[key(name)] || {};
+      const size = c.size || (/50th/i.test(name) ? 'per glass' : '');
+      (buckets[sectionFor(categories[catId], name)] ||= []).push({
+        rank: c.rank || 100,
+        low: Math.min(...amounts),
+        row: [c.cc || '', c.name || name.replace(CANNED, ''), amounts.map(formatPrice).join(' / '), size || null, c.tag || null],
+        name,
       });
     });
 
-    request.on('error', (e) => {
+  const sorted = id => (buckets[id] || []).sort((a, b) => a.rank - b.rank || a.low - b.low);
+  return LAYOUT.map(col => col.map(sec => {
+    const entries = sorted(sec.id);
+    if (!entries.length) return null;
+    if (sec.id === 'champagne') {
+      return {
+        toast: true, flag: 'fr', kick: 'Champagne', title: 'Veuve Clicquot', sub: 'Yellow Label Brut',
+        pours: entries.map(e => [/1\.5/.test(e.name) ? 'Magnum 1.5 L' : /750/.test(e.name) ? '750 ml' : e.row[1], e.row[2]]),
+      };
+    }
+    const { id, ...rest } = sec;
+    return { ...rest, items: entries.map(e => e.row) };
+  }).filter(Boolean));
+}
+
+function render(menu, theme) {
+  const json = JSON.stringify(menu).replace(/</g, '\\u003c');
+  return TEMPLATE.replace('__MENU__', json).replace('__THEME__', theme);
+}
+
+// Keep the last good catalog so a Square outage shows the previous menu, not an error.
+let lastGood = null;
+
+// Create an HTTP server
+http.createServer(async (req, res) => {
+  const url = new URL(req.url, 'http://localhost');
+
+  if (STATIC[url.pathname]) {
+    res.writeHead(200, {
+      'Content-Type': TYPES[path.extname(url.pathname)] || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=86400',
+    });
+    fs.createReadStream(STATIC[url.pathname]).pipe(res);
+    return;
+  }
+
+  if (url.pathname === '/' || url.pathname === '/rose') {
+    let menu;
+    try {
+      menu = buildMenu(await fetchCatalog());
+      lastGood = menu;
+    } catch (e) {
       console.error(`Problem with request: ${e.message}`);
+      menu = lastGood;
+    }
+    if (!menu) {
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end('Internal Server Error');
-    });
-
-    // End the request
-    request.end();
-
-  } else {
-    // Handle 404 - Not Found
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('404 Not Found');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(render(menu, url.pathname === '/rose' ? 'rose' : 'gold'));
+    return;
   }
+
+  // Handle 404 - Not Found
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('404 Not Found');
 }).listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}/`);
 });
