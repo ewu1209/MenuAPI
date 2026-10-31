@@ -68,12 +68,12 @@ function fetchCatalog() {
 // small after the name; tag marks a best seller. Items not listed here still appear,
 // after the listed ones, under their Square name.
 const CURATION = {
-  'daou reserve cabernet':  { rank: 1, cc: 'us' },
+  'daou reserve cabernet':  { rank: 1, cc: 'us', tag: 'Popular' },
   'house cabernet':         { rank: 2 },
   'house pinot noir':       { rank: 3 },
   'caymus cabernet 1l':     { rank: 4, cc: 'us', name: 'Caymus Cabernet', size: '1 L' },
 
-  'freixenet pinot grigio': { rank: 1, cc: 'it' },
+  'freixenet pinot grigio': { rank: 1, cc: 'it', tag: 'Popular' },
   'house sauv blanc':       { rank: 2, name: 'House Sauvignon Blanc' },
   'stags leap sauv blanc':  { rank: 3, cc: 'us', name: 'Stags Leap Sauvignon Blanc' },
   'house chardonnay':       { rank: 4 },
@@ -88,7 +88,7 @@ const CURATION = {
   'mojito':                 { rank: 3 },
   'moscow mule':            { rank: 4 },
 
-  'press hard seltzer':     { rank: 1 },
+  'press hard seltzer':     { rank: 1, tag: 'Popular' },
   'spellbinder hazy ipa':   { rank: 2 },
   'modelo':                 { rank: 3 },
   'michelob ultra':         { rank: 4 },

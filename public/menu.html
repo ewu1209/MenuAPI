@@ -39,16 +39,21 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.06;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* Single hairline frame with small deco fans in the corners. */
-.frame{position:fixed;inset:calc(var(--u)*2.2);pointer-events:none;border:1px solid rgba(242,176,0,.14)}
-.frame svg{position:absolute;width:calc(var(--u)*6);height:calc(var(--u)*6);stroke:var(--gold);fill:none;stroke-width:1;opacity:.5}
-.frame svg:nth-child(1){top:-1px;left:-1px}
-.frame svg:nth-child(2){top:-1px;right:-1px;transform:scaleX(-1)}
-.frame svg:nth-child(3){bottom:-1px;left:-1px;transform:scaleY(-1)}
-.frame svg:nth-child(4){bottom:-1px;right:-1px;transform:scale(-1)}
+/* A boiserie frame, like the panelled walls of a French palace: an outer fillet, an inner rule with
+   concave corners, rococo scrolls and a small rosette in each corner, and a crest at top and bottom center.
+   Drawn by frame() at the screen's exact pixel size so the hairlines stay crisp. */
+.frame{position:fixed;inset:0;pointer-events:none}
+.frame svg{display:block;width:100%;height:100%;fill:none;stroke:var(--gold);stroke-linecap:round;stroke-linejoin:round}
+.frame .outer{opacity:.3}
+.frame .inner{opacity:.42}
+.frame .orn{opacity:.62}
+.frame .bead{fill:var(--gold);stroke:none}
+.frame .pearl{fill:var(--gold);stroke:none;opacity:.32}
+.frame .fillet{opacity:.16}
+.frame .faint{opacity:.5}
 
 .screen{position:relative;z-index:1;height:100%;display:grid;grid-template-rows:1fr auto;gap:calc(var(--u)*3);
-  padding:calc(var(--u)*5.2) calc(var(--u)*4.6) calc(var(--u)*3.8)}
+  padding:calc(var(--u)*10) calc(var(--u)*8.6) calc(var(--u)*5.2)}
 
 /* Three columns separated by faded hairlines; the middle one ends in the Champagne card. */
 .menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;overflow:hidden}
@@ -101,24 +106,20 @@ footer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:ca
   font-family:var(--display);font-weight:300;font-size:calc(var(--u)*1.6);letter-spacing:.28em;text-transform:uppercase;color:var(--mute)}
 footer b{font-weight:400;color:var(--gold)}
 footer .ig{text-transform:none;letter-spacing:.14em}
-.logo{height:calc(var(--u)*8.2);width:auto;display:block;flex:none}
+footer .key i{font-style:normal;color:var(--gold-hi);font-family:var(--body);font-size:1.3em;margin-right:.35em}
+.logo{height:calc(var(--u)*11.5);width:auto;display:block;flex:none}
 .rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(242,176,0,.08),var(--hair))}
 .rule.r{background:linear-gradient(270deg,rgba(242,176,0,.08),var(--hair))}
 footer .side{display:flex;align-items:center;gap:calc(var(--u)*3.5);min-width:0}
 footer span{flex:none;white-space:nowrap}
 </style>
 
-<div class="frame" aria-hidden="true">
-  <svg viewBox="0 0 60 60"><path d="M1 59V1h58"/><path d="M1 24A23 23 0 0 1 24 1"/><path d="M1 13A12 12 0 0 1 13 1"/></svg>
-  <svg viewBox="0 0 60 60"><path d="M1 59V1h58"/><path d="M1 24A23 23 0 0 1 24 1"/><path d="M1 13A12 12 0 0 1 13 1"/></svg>
-  <svg viewBox="0 0 60 60"><path d="M1 59V1h58"/><path d="M1 24A23 23 0 0 1 24 1"/><path d="M1 13A12 12 0 0 1 13 1"/></svg>
-  <svg viewBox="0 0 60 60"><path d="M1 59V1h58"/><path d="M1 24A23 23 0 0 1 24 1"/><path d="M1 13A12 12 0 0 1 13 1"/></svg>
-</div>
+<div class="frame" id="frame" aria-hidden="true"></div>
 
 <main class="screen">
   <section class="menu" id="menu"></section>
   <footer>
-    <div class="side"><span class="ig">@empirescottsdale</span><div class="rule"></div></div>
+    <div class="side"><span class="ig">@empirescottsdale</span><span class="key"><i>★</i>Best seller</span><div class="rule"></div></div>
     <img class="logo" src="assets/empire-logo-full.png" alt="Empire Scottsdale">
     <div class="side"><div class="rule r"></div><span>Members enjoy <b>25% off</b> all alcohol</span></div>
   </footer>
@@ -168,7 +169,84 @@ function fit() {
   // Measurements round to whole pixels, so back off 1% to be sure nothing is clipped on the TV.
   set("--k", Math.floor(parseFloat(root.style.getPropertyValue("--k")) * 990) / 1000);
   largest("--g", 1, 2.4);
+  set("--g", Math.floor(parseFloat(root.style.getPropertyValue("--g")) * 980) / 1000);
 }
+/* The frame, in units of --u. Three rules (outer fillet, inner rule with concave corners, a faint inner
+   fillet) with pearl beading between the first two. Ornaments are drawn once and mirrored: a corner piece,
+   a shell crest with garlands at top center, smaller shell crests at the sides, and scroll brackets
+   either side of a break in the bottom rules where the logo sits. */
+const fan = (cx, cy, dir, len, spread, n) => {
+  const pt = (deg, r) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
+  const angs = [...Array(n)].map((_, k) => dir - spread + 2 * spread * k / (n - 1));
+  const rays = angs.map(t => { const [x, y] = pt(t, len * .25), [X, Y] = pt(t, len); return `M${x} ${y}L${X} ${Y}`; }).join("");
+  const edge = angs.slice(1).map((t, k) => { const [qx, qy] = pt((t + angs[k]) / 2, len * 1.22), [X, Y] = pt(t, len); return `Q${qx} ${qy} ${X} ${Y}`; }).join("");
+  const [sx, sy] = pt(angs[0], len);
+  return `<path d="${rays}M${sx} ${sy}${edge}"/><circle class="bead" cx="${cx}" cy="${cy}" r="${len * .12}"/>`;
+};
+const LEAF = `<path d="M0 0C.35-.3.85-.25 1 0C.85.25.35.3 0 0Z"/>`;
+const CORNER = `
+  <path d="M5.6 .9C7.6 .9 9.4 .8 10.7 1.6C11.6 2.2 11.3 3.3 10.4 3.2C9.7 3.1 9.7 2.3 10.2 2.2"/>
+  <path d="M.9 5.6C.9 7.6 .8 9.4 1.6 10.7C2.2 11.6 3.3 11.3 3.2 10.4C3.1 9.7 2.3 9.7 2.2 10.2"/>
+  <path d="M10.7 1.6C9.6 2.6 8.4 3 7.1 2.8"/><path d="M1.6 10.7C2.6 9.6 3 8.4 2.8 7.1"/>
+  <path d="M11.9 1.1C12.9 .45 14.3 .5 15.5 .95C14.3 1.45 12.9 1.6 11.9 1.1Z"/><path d="M12.4 1.08L15 .97"/>
+  <path d="M1.1 11.9C.45 12.9 .5 14.3 .95 15.5C1.45 14.3 1.6 12.9 1.1 11.9Z"/><path d="M1.08 12.4L.97 15"/>
+  <path d="M15.5 .95C16.8 .9 17.6 1.5 17.4 2.2C17.2 2.8 16.4 2.7 16.5 2.1"/><path d="M.95 15.5C.9 16.8 1.5 17.6 2.2 17.4C2.8 17.2 2.7 16.4 2.1 16.5"/>
+  <circle class="bead" cx="19" cy="1" r=".26"/><circle class="bead" cx="20.2" cy="1" r=".19"/><circle class="bead" cx="21.2" cy="1" r=".13"/>
+  <circle class="bead" cx="1" cy="19" r=".26"/><circle class="bead" cx="1" cy="20.2" r=".19"/><circle class="bead" cx="1" cy="21.2" r=".13"/>
+  ${fan(2.3, 2.3, 45, 1.75, 62, 5)}
+  <g transform="translate(.3 .3) rotate(45)">${[0, 90, 180, 270].map(r => `<g transform="rotate(${r})">${LEAF}</g>`).join("")}</g>
+  <circle class="bead" cx=".3" cy=".3" r=".22"/>`;
+const SCROLLS = `
+  <path d="M-4.4 0C-3.2 0-2.2 .3-1.9 1.2C-1.7 1.9-2.4 2.4-2.9 2C-3.3 1.7-3 1.2-2.6 1.3"/>
+  <path d="M4.4 0C3.2 0 2.2 .3 1.9 1.2C1.7 1.9 2.4 2.4 2.9 2C3.3 1.7 3 1.2 2.6 1.3"/>`;
+const CREST = `${SCROLLS}${fan(0, .15, 90, 2.5, 66, 7)}<circle class="bead" cx="0" cy="-.6" r=".28"/>`;
+const SWAGS = [1, -1].map(d => `<g transform="scale(${d} 1)">
+  <path d="M4.9 .4C6.4 2.4 9.1 2.4 10.6 .4"/><path d="M10.6 .4C11.8 1.7 13.9 1.7 15.1 .4"/><path d="M15.1 .4C16 1.2 17.4 1.2 18.2 .4"/>
+  <path d="M5.6 .5C7 1.6 8.5 1.6 9.9 .5" class="faint"/>
+  <circle class="bead" cx="7.75" cy="2.35" r=".3"/><path d="M7.75 2.7V3.3"/><circle class="bead" cx="7.75" cy="3.55" r=".17"/>
+  <circle class="bead" cx="12.85" cy="1.75" r=".22"/><circle class="bead" cx="16.65" cy="1.05" r=".16"/></g>`).join("");
+const BRACKET = `<path d="M0 0C-1.3 0-2.4-.4-2.7-1.4C-2.9-2.2-2.1-2.7-1.6-2.2C-1.2-1.8-1.5-1.3-1.9-1.4"/>
+  <path d="M.6-.1C1.4-.6 2.6-.6 3.6-.1"/><circle class="bead" cx="0" cy="0" r=".3"/>`;
+function frame() {
+  const W = innerWidth, H = innerHeight, u = Math.min(H / 100, W * .5625 / 100);
+  const a = 1.7 * u, b = 2.8 * u, R = 3.6 * u, f = .9 * u, sw = Math.max(1, u * .11);
+  const gt = 5.7 * u, gs = 4.6 * u, gb = 12.5 * u;  // half-widths of the breaks: top crest, side crests, logo
+  // A rule inset i from the screen edge with concave corners of radius r centred on the inner rule's corners.
+  const rule = (i, r) => {
+    const o = Math.sqrt(r * r - (i - b) ** 2);
+    const arc = (x, y) => `A${r} ${r} 0 0 0 ${x} ${y}`;
+    return `M${b + o} ${i}H${W / 2 - gt}M${W / 2 + gt} ${i}H${W - b - o}${arc(W - i, b + o)}
+      V${H / 2 - gs}M${W - i} ${H / 2 + gs}V${H - b - o}${arc(W - b - o, H - i)}H${W / 2 + gb}
+      M${W / 2 - gb} ${H - i}H${b + o}${arc(i, H - b - o)}V${H / 2 + gs}M${i} ${H / 2 - gs}V${b + o}${arc(b + o, i)}`;
+  };
+  const at = (x, y, sx, sy, art, rot = 0) =>
+    `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${u * sx} ${u * sy})">${art}</g>`;
+  // Pearl moulding between the outer and inner rules, stopping short of the corners and breaks.
+  const m = (a + b) / 2, step = 1.5 * u, pearls = [];
+  for (let x = m + 8 * u; x < W - m - 8 * u; x += step) {
+    if (Math.abs(x - W / 2) > gt + 1.2 * u) pearls.push([x, m]);
+    if (Math.abs(x - W / 2) > gb + 1.5 * u) pearls.push([x, H - m]);
+  }
+  for (let y = m + 8 * u; y < H - m - 8 * u; y += step)
+    if (Math.abs(y - H / 2) > gs + 1.2 * u) pearls.push([m, y], [W - m, y]);
+  const C = 1.25;  // corner and crest scale
+  document.getElementById("frame").innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" stroke-width="${sw}">
+      <path class="outer" d="M${W / 2 - gb} ${H - a}H${a}V${a}H${W - a}V${H - a}H${W / 2 + gb}"/>
+      <path class="inner" d="${rule(b, R)}"/>
+      <path class="fillet" d="${rule(b + f, R + f)}"/>
+      <g class="pearl">${pearls.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${.13 * u}"/>`).join("")}</g>
+      <g class="orn">
+        ${at(b, b, C, C, CORNER)}${at(W - b, b, -C, C, CORNER)}${at(b, H - b, C, -C, CORNER)}${at(W - b, H - b, -C, -C, CORNER)}
+        ${at(W / 2, b, C, C, CREST + SWAGS)}
+        ${at(b, H / 2, 1.05, 1.05, CREST, -90)}${at(W - b, H / 2, 1.05, 1.05, CREST, 90)}
+        ${at(W / 2 - gb, H - m, -1.2, 1.2, BRACKET)}${at(W / 2 + gb, H - m, 1.2, 1.2, BRACKET)}
+      </g></svg>`;
+  document.querySelectorAll("#frame .orn *").forEach(el => el.setAttribute("vector-effect", "non-scaling-stroke"));
+}
+frame();
+addEventListener("resize", frame);
+
 fit();
 document.fonts.ready.then(fit);
 addEventListener("load", fit);
