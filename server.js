@@ -65,7 +65,7 @@ function fetchCatalog() {
 
 // How each Square item is shown, keyed by its Square name in lower case, without "(canned)".
 // rank is the order within its section (2026 sales); cc is a wine's origin flag; size is shown
-// small after the name; tag is an optional marker after the price. Items not listed here still appear,
+// small after the name; tag marks a best seller. Items not listed here still appear,
 // after the listed ones, under their Square name.
 const CURATION = {
   'daou reserve cabernet':  { rank: 1, cc: 'us' },
@@ -79,11 +79,11 @@ const CURATION = {
   'house chardonnay':       { rank: 4 },
   'campuget viognier':      { rank: 5, cc: 'fr' },
 
-  'freixenet prosecco':     { rank: 1, cc: 'it' },
+  'freixenet prosecco':     { rank: 1, cc: 'it', tag: 'Popular' },
   'gemma di luna moscato':  { rank: 2, cc: 'it', name: 'Gemma di Luna Moscato', size: '187 ml' },
   'sparkling rose':         { rank: 3, name: 'Sparkling Rosé' },
 
-  'margarita':              { rank: 1 },
+  'margarita':              { rank: 1, tag: 'Popular' },
   'espresso martini':       { rank: 2 },
   'mojito':                 { rank: 3 },
   'moscow mule':            { rank: 4 },
@@ -108,10 +108,10 @@ const key = name => name.replace(CANNED, '').replace(/\s+/g, ' ').trim().toLower
 const WINE = 'glass / bottle';
 const LAYOUT = [
   [{ id: 'reds', title: 'Reds', legend: WINE },
-   { id: 'whites', title: 'Whites', legend: WINE, note: 'A bottle pours about five glasses.' },
+   { id: 'whites', title: 'Whites', legend: WINE },
    { id: 'members', title: 'Members Only' }],
-  [{ id: 'sparkling', title: 'Sparkling', legend: WINE },
-   { id: 'canned', title: 'Canned Cocktails' },
+  [{ id: 'canned', title: 'Canned Cocktails' },
+   { id: 'sparkling', title: 'Sparkling', legend: WINE },
    { id: 'champagne' }],
   [{ id: 'beer', title: 'Beer, Cider & Seltzer' },
    { id: 'zero', title: 'Zero Proof' }],
