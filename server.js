@@ -114,10 +114,11 @@ const LAYOUT = [
    { id: 'canned', title: 'Canned Cocktails' },
    { id: 'champagne' }],
   [{ id: 'beer', title: 'Beer, Cider & Seltzer' },
-   { id: 'zero', title: 'Zero Proof' },
-   { id: 'other', title: 'More' }],
+   { id: 'zero', title: 'Zero Proof' }],
 ];
 
+// Only these Square categories are on the bar menu; everything else in the catalog
+// (snacks, retail, other bars' wines) is left off.
 function sectionFor(category, name) {
   switch (category) {
     case 'Reds': return 'reds';
@@ -125,10 +126,9 @@ function sectionFor(category, name) {
     case 'Members Only': return 'members';
     case 'Sparkling': return /veuve/i.test(name) ? 'champagne' : 'sparkling';
     case 'Seltzer & More': return CANNED.test(name) ? 'canned' : 'beer';
-    case 'Beer':
-    case 'Craft Beer': return 'beer';
+    case 'Beer': return 'beer';
     case 'No Alcohol': return 'zero';
-    default: return 'other';
+    default: return null;
   }
 }
 
@@ -143,16 +143,18 @@ function buildMenu(objects) {
     .forEach(item => {
       const catId = item.item_data.categories && item.item_data.categories[0] && item.item_data.categories[0].id;
       if (!catId || !categories[catId]) return;
+      const name = item.item_data.name.trim();
+      const section = sectionFor(categories[catId], name);
+      if (!section) return;
       // Non-member prices, in Square's variation order (glass, then bottle)
       const amounts = (item.item_data.variations || [])
         .filter(v => !v.item_variation_data.name.toLowerCase().includes('member'))
         .map(v => v.item_variation_data.price_money && v.item_variation_data.price_money.amount)
         .filter(a => typeof a === 'number');
       if (!amounts.length) return;
-      const name = item.item_data.name.trim();
       const c = CURATION[key(name)] || {};
       const size = c.size || (/50th/i.test(name) ? 'per glass' : '');
-      (buckets[sectionFor(categories[catId], name)] ||= []).push({
+      (buckets[section] ||= []).push({
         rank: c.rank || 100,
         low: Math.min(...amounts),
         row: [c.cc || '', c.name || name.replace(CANNED, ''), amounts.map(formatPrice).join(' / '), size || null, c.tag || null],
