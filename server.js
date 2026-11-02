@@ -177,9 +177,16 @@ function buildMenu(objects) {
   }).filter(Boolean));
 }
 
-function render(menu, theme) {
+// One page per bar, all from the same catalog: the color theme and the bar's name shown in the frame.
+const VENUES = {
+  '/':       { theme: 'gold',   name: 'Capital Bar' },
+  '/rose':   { theme: 'rose',   name: 'The Enchanted Piano' },
+  '/louvre': { theme: 'louvre', name: 'The Louvre' },
+};
+
+function render(menu, venue) {
   const json = JSON.stringify(menu).replace(/</g, '\\u003c');
-  return TEMPLATE.replace('__MENU__', json).replace('__THEME__', theme);
+  return TEMPLATE.replace('__MENU__', json).replace('__THEME__', venue.theme).replace('__VENUE__', venue.name);
 }
 
 // Keep the last good catalog so a Square outage shows the previous menu, not an error.
@@ -198,7 +205,8 @@ http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === '/' || url.pathname === '/rose') {
+  const venue = VENUES[url.pathname];
+  if (venue) {
     let menu;
     try {
       menu = buildMenu(await fetchCatalog());
@@ -213,7 +221,7 @@ http.createServer(async (req, res) => {
       return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    res.end(render(menu, url.pathname === '/rose' ? 'rose' : 'gold'));
+    res.end(render(menu, venue));
     return;
   }
 
