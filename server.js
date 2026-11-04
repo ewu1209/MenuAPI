@@ -205,6 +205,16 @@ http.createServer(async (req, res) => {
     return;
   }
 
+  // The events slideshow: public/events.html filled with public/events.json, read fresh each time.
+  if (url.pathname === '/events') {
+    const page = fs.readFileSync(path.join(PUBLIC, 'events.html'), 'utf8');
+    const events = fs.readFileSync(path.join(PUBLIC, 'events.json'), 'utf8');
+    const json = JSON.stringify(JSON.parse(events)).replace(/</g, '\\u003c');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(page.replace('__EVENTS__', () => json));
+    return;
+  }
+
   const venue = VENUES[url.pathname];
   if (venue) {
     let menu;
